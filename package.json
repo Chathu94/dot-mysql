@@ -1,0 +1,16 @@
+{
+  "name": "dot-mysql",
+  "version": "0.0.1",
+  "description": "Promosified MySQL Helper",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Chathu94/dot-mysql.git"
+  },
+  "author": "Hashan Chathruanga",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^3.1.0",
+    "mysql": "^2.15.0"
+  }
+}
