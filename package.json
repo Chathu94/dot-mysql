@@ -1,6 +1,6 @@
 {
   "name": "dot-mysql",
-  "version": "0.0.1",
+  "version": "0.0.21",
   "description": "Promosified MySQL Helper",
   "main": "index.js",
   "repository": {
