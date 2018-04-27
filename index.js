@@ -63,7 +63,7 @@ var MySQL = function () {
             as: args[1]
           });
         } else {
-          this._select.push(args[0]);
+          this._select.push([].concat(_toConsumableArray(this._select), _toConsumableArray(args[0])));
         }
       }
       this.log('Added select', this._select);
@@ -119,7 +119,7 @@ var MySQL = function () {
           }
         }
       } else if (_typeof(args[0]) === 'object') {
-        this._where.push(args[0]);
+        this._where.push([].concat(_toConsumableArray(this._where), _toConsumableArray(args[0])));
       }
       this.log('Added where', this._where);
       return this;
@@ -156,12 +156,12 @@ var MySQL = function () {
       this.log('Adding whereGroupEnd', args);
       if (typeof args[0] === 'string') {
         this._where.push({
-          rel: args[0],
+          rel: '',
           value: ')'
         });
       } else {
         this._where.push({
-          rel: 'AND',
+          rel: '',
           value: ')'
         });
       }
@@ -472,9 +472,9 @@ var MySQL = function () {
     }
   }, {
     key: 'rollback',
-    value: function rollback() {
+    value: function rollback(err) {
       if (this._connection) {
-        return MySQL.rollback(this._connection);
+        return MySQL.rollback(this._connection, err);
       }
     }
   }], [{
@@ -528,7 +528,16 @@ var MySQL = function () {
     }
   }, {
     key: 'beginTransaction',
-    value: function beginTransaction() {
+    value: function beginTransaction(con) {
+      if (con) {
+        return new Promise(function (resolve, reject) {
+          con.beginTransaction(function (err) {
+            if (err) reject(err);
+            MySQL.sqlTransaction = true;
+            resolve(con);
+          });
+        });
+      }
       return MySQL.getConnection().then(function (con) {
         return new Promise(function (resolve, reject) {
           con.beginTransaction(function (err) {
@@ -541,11 +550,11 @@ var MySQL = function () {
     }
   }, {
     key: 'rollback',
-    value: function rollback(con) {
+    value: function rollback(con, err) {
       return new Promise(function (resolve, reject) {
-        con.beginTransaction(function (err) {
-          if (err) reject(err);
+        con.rollback(function () {
           MySQL.sqlTransaction = false;
+          if (err) reject(err);
           resolve(con);
         });
       });
@@ -557,9 +566,7 @@ var MySQL = function () {
         con.commit(function (error) {
           if (error) {
             MySQL.sqlTransaction = false;
-            con.rollback(function () {
-              return reject(error);
-            });
+            MySQL.rollback(error);
           } else {
             try {
               con.release();
