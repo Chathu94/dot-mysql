@@ -63,8 +63,12 @@ var MySQL = function () {
             as: args[1]
           });
         } else {
-          this._select.push([].concat(_toConsumableArray(this._select), _toConsumableArray(args[0])));
+          this._select.push({
+            key: args[0]
+          });
         }
+      } else if (_typeof(args[0]) === 'object') {
+        this._select.push([].concat(_toConsumableArray(this._select), _toConsumableArray(args[0])));
       }
       this.log('Added select', this._select);
       return this;
@@ -364,9 +368,11 @@ var MySQL = function () {
   }, {
     key: 'getWhere',
     value: function getWhere() {
+      var _this = this;
+
       return this._where.map(function (w, k) {
-        if (!w.key) return '' + (k === 0 ? w.rel + ' ' : '') + w;
-        return '' + (k === 0 ? '' : w.rel + ' ') + w.key + ' ' + w.cond + ' ?';
+        if (!w.key) return '' + (k === 0 || _this._where[k - 1] && _this._where[k - 1].value === '(' ? '' : w.rel + ' ') + w;
+        return '' + (k === 0 || _this._where[k - 1] && _this._where[k - 1].value === '(' ? '' : w.rel + ' ') + w.key + ' ' + w.cond + ' ?';
       }).join(' ');
     }
   }, {
@@ -374,7 +380,7 @@ var MySQL = function () {
     value: function getSelect() {
       return this._select.map(function (w) {
         if (typeof w === 'string') return '`' + w + '`';
-        return w.key + ' AS \'' + w.as + '\'';
+        return w.as ? w.key + ' AS \'' + w.as + '\'' : w.key;
       }).join(', ');
     }
   }, {
@@ -414,10 +420,8 @@ var MySQL = function () {
       return '';
     }
   }, {
-    key: 'exec',
-    value: function exec() {
-      var _this = this;
-
+    key: 'values',
+    value: function values() {
       var values = [];
       if (this._insert !== '') {
         values = this._values.map(function (_ref4) {
@@ -448,6 +452,14 @@ var MySQL = function () {
           return value;
         });
       }
+      return values;
+    }
+  }, {
+    key: 'exec',
+    value: function exec() {
+      var _this2 = this;
+
+      var values = this.values();
       var sql = this.query();
       this.log('Executing query', sql, 'values', values);
       if (typeof (arguments.length <= 0 ? undefined : arguments[0]) === 'boolean' && (arguments.length <= 0 ? undefined : arguments[0]) === true) {
@@ -455,7 +467,7 @@ var MySQL = function () {
           return MySQL.execute({ sql: sql, values: values, connection: this._connection });
         } else {
           return MySQL.beginTransaction().then(function (con) {
-            _this._connection = con;
+            _this2._connection = con;
             return MySQL.execute({ sql: sql, values: values, connection: con });
           });
         }
@@ -580,12 +592,12 @@ var MySQL = function () {
     key: 'execute',
     value: function execute(_ref10) {
       var sql = _ref10.sql,
-        _ref10$timeout = _ref10.timeout,
-        timeout = _ref10$timeout === undefined ? 40000 : _ref10$timeout,
-        _ref10$values = _ref10.values,
-        values = _ref10$values === undefined ? [] : _ref10$values,
-        connection = _ref10.connection,
-        rollback = _ref10.rollback;
+          _ref10$timeout = _ref10.timeout,
+          timeout = _ref10$timeout === undefined ? 40000 : _ref10$timeout,
+          _ref10$values = _ref10.values,
+          values = _ref10$values === undefined ? [] : _ref10$values,
+          connection = _ref10.connection,
+          rollback = _ref10.rollback;
 
       var promise = function promise(con, rb) {
         return new Promise(function (resolve, reject) {

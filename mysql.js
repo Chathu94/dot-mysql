@@ -43,8 +43,12 @@ export default class MySQL {
           as: args[1]
         });
       } else {
-        this._select.push([...this._select, ...args[0]]);
+        this._select.push({
+          key: args[0]
+        });
       }
+    } else if (typeof args[0] === 'object') {
+      this._select.push([...this._select, ...args[0]]);
     }
     this.log('Added select', this._select);
     return this;
@@ -274,15 +278,15 @@ export default class MySQL {
 
   getWhere() {
     return this._where.map((w, k) => {
-      if (!w.key) return `${(k === 0) ? `${w.rel} ` : ''}${w}`;
-      return `${(k === 0) ? '' : `${w.rel} `}${w.key} ${w.cond} ?`;
+      if (!w.key) return `${(k === 0) || (this._where[k-1] && this._where[k-1].value === '(') ? '' : `${w.rel} `}${w}`;
+      return `${(k === 0) || (this._where[k-1] && this._where[k-1].value === '(') ? '' : `${w.rel} `}${w.key} ${w.cond} ?`;
     }).join(' ');
   }
 
   getSelect() {
     return this._select.map((w) => {
       if (typeof w === 'string') return `\`${w}\``;
-      return `${w.key} AS '${w.as}'`;
+      return w.as ? `${w.key} AS '${w.as}'` : w.key;
     }).join(', ');
   }
 
@@ -305,7 +309,7 @@ export default class MySQL {
     return '';
   }
 
-  exec(...args) {
+  values() {
     let values = [];
     if (this._insert !== '') {
       values = this._values.map(({ value }) => value);
@@ -318,6 +322,11 @@ export default class MySQL {
     } else if (this._from !== '') {
       values = this._where.map(({ value }) => value);
     }
+    return values;
+  }
+
+  exec(...args) {
+    const values = this.values();
     const sql = this.query();
     this.log('Executing query', sql, 'values', values);
     if (typeof args[0] === 'boolean' && args[0] === true) {
