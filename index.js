@@ -23,6 +23,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var debug = require('debug')('MySQL:');
 
 var MySQL = function () {
+
+  /**
+   * @constructor
+   */
   function MySQL() {
     _classCallCheck(this, MySQL);
 
@@ -31,6 +35,14 @@ var MySQL = function () {
     this._connection = undefined;
     this.clear();
   }
+
+  /**
+   * Clear current values in Query Builder
+   * @example
+   * db.clear();
+   * @returns {MySQL}
+   */
+
 
   _createClass(MySQL, [{
     key: 'clear',
@@ -48,6 +60,16 @@ var MySQL = function () {
       this._values = [];
       return this;
     }
+
+    /**
+     * Add select parameter
+     * @example
+     * db.select('username', 'uname'); // username AS uname
+     * @param {string} key Column name
+     * @param {string|number} as Used as select as [?]
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'select',
     value: function select() {
@@ -73,6 +95,18 @@ var MySQL = function () {
       this.log('Added select', this._select);
       return this;
     }
+
+    /**
+     * Add table name to select from
+     * @example
+     * // SELECT * FROM test
+     * db
+     *  .select('*')
+     *  .from('test');
+     * @param {string} table_name Table name
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'from',
     value: function from() {
@@ -87,6 +121,40 @@ var MySQL = function () {
       this.log('Added from', this._from);
       return this;
     }
+
+    /**
+     * Add where parameter
+     * @example
+     * // SELECT * FROM test WHERE name = ?
+     * db
+     *  .from('test')
+     *  .where('name', 'test');
+     * @example
+     * // SELECT * FROM test WHERE price > ?
+     * db
+     *  .from('test')
+     *  .where('price', 30, '>');
+     * @example
+     * // SELECT * FROM test WHERE price > ? AND name = ?
+     * db
+     *  .from('test')
+     *  .where('price', 30, '>')
+     *  .where('name', 'test');
+     * @example
+     * // SELECT * FROM test WHERE price > ? OR name = ?
+     * db
+     *  .from('test')
+     *  .where('price', 30, '>')
+     *  .where('name', 'test', '=', 'OR');
+     * @param {string} column Column name
+     * @param {string|number} value Value to check
+     * @param {string} condition Condition to where (=, <, >, !=, <=, >=)
+     * @default =
+     * @param {string} refrence Referenced to previous where
+     * @default AND
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'where',
     value: function where() {
@@ -128,6 +196,31 @@ var MySQL = function () {
       this.log('Added where', this._where);
       return this;
     }
+
+    /**
+     * Grouping where with brackets
+     * @example
+     * // SELECT * FROM test WHERE price = ? AND (name = ? OR name = ?)
+     * db
+     *  .from('test')
+     *  .where('price', 30)
+     *  .whereGroupStart()
+     *  .where('name', 't1')
+     *  .where('name', 't2')
+     *  .whereGroupEnd();
+     * @example
+     * // SELECT * FROM test WHERE price = ? OR (name = ? OR name = ?)
+     * db
+     *  .from('test')
+     *  .where('price', 30)
+     *  .whereGroupStart('OR')
+     *  .where('name', 't1')
+     *  .where('name', 't2')
+     *  .whereGroupEnd();
+     * @param {string} refrence Referenced to previous where
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'whereGroupStart',
     value: function whereGroupStart() {
@@ -139,12 +232,14 @@ var MySQL = function () {
       if (typeof args[0] === 'string') {
         this._where.push({
           rel: args[0],
-          value: '('
+          bracket: true,
+          start: true
         });
       } else {
         this._where.push({
           rel: 'AND',
-          value: '('
+          bracket: true,
+          start: true
         });
       }
       this.log('Added whereGroupStart', this._where);
@@ -161,17 +256,27 @@ var MySQL = function () {
       if (typeof args[0] === 'string') {
         this._where.push({
           rel: '',
-          value: ')'
+          bracket: true,
+          start: false
         });
       } else {
         this._where.push({
           rel: '',
-          value: ')'
+          bracket: true,
+          start: false
         });
       }
       this.log('Added whereGroupEnd', this._where);
       return this;
     }
+
+    /**
+     * Add set into update
+     * @param {string} column Column name
+     * @param {string|number} value Value to set
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'set',
     value: function set() {
@@ -371,9 +476,9 @@ var MySQL = function () {
       var _this = this;
 
       return this._where.map(function (w, k) {
-        if (!w.key) return '' + (k === 0 || _this._where[k - 1] && _this._where[k - 1].value === '(' ? '' : w.rel + ' ') + w;
-        return '' + (k === 0 || _this._where[k - 1] && _this._where[k - 1].value === '(' ? '' : w.rel + ' ') + w.key + ' ' + w.cond + ' ?';
-      }).join(' ');
+        if (w.bracket) return w.rel + ' ' + ('' + (w.start ? '(' : ')'));
+        return '' + (k === 0 || _this._where[k - 1] && _this._where[k - 1].start ? '' : w.rel + ' ') + w.key + ' ' + w.cond + ' ?';
+      }).join(' ').replace(/\(\s/g, '(').replace(/\s\s\)/g, ')');
     }
   }, {
     key: 'getSelect',
@@ -437,17 +542,23 @@ var MySQL = function () {
         values = [].concat(_toConsumableArray(this._set.map(function (_ref6) {
           var value = _ref6.value;
           return value;
-        })), _toConsumableArray(this._where.map(function (_ref7) {
+        })), _toConsumableArray(this._where.filter(function (w) {
+          return !w.bracket;
+        }).map(function (_ref7) {
           var value = _ref7.value;
           return value;
         })));
       } else if (this._delete !== '') {
-        values = this._where.map(function (_ref8) {
+        values = this._where.filter(function (w) {
+          return !w.bracket;
+        }).map(function (_ref8) {
           var value = _ref8.value;
           return value;
         });
       } else if (this._from !== '') {
-        values = this._where.map(function (_ref9) {
+        values = this._where.filter(function (w) {
+          return !w.bracket;
+        }).map(function (_ref9) {
           var value = _ref9.value;
           return value;
         });
@@ -625,7 +736,7 @@ var MySQL = function () {
           return promise(con, rollback || MySQL.sqlTransaction || false);
         });
       } else {
-        return promise(connection, rollback || MySQL.sqlTransaction || false);
+        return promise(connection, true);
       }
     }
   }, {

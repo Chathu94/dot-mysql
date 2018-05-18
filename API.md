@@ -14,14 +14,4 @@
 | `escape` | `(str: String)` | `String` | Escape string to use in query. |
 
 ### Query Builder Functions
-
-| Function | Parameters | Note |
-|---|---|---|
-| `clear` | `none` | Clear current values for new query build. |
-| `select` | `(key: String, as: String)` | Add select parameter. |
-| `select` | `([{ key: String, as: String }])` | Add array of select parameters. |
-| `from` | `(table: String)` | Add table to select from |
-| `where` | `(key[Column]: String, value[Value]: String, cond[=]: String, rel[AND]: String)` | Add where parameter |
-| `where` | `([{ key[Column]: String, value[Value]: String, cond[=, <, >]: String, rel[AND, OR]: String }])` | Add where parameter |
-| `whereGroupStart` | `(rel: [AND])` | Start where bracket "(" |
-| `whereGroupEnd` | `` | Start where bracket ")" |
+Look [JSDOC.md](https://github.com/Chathu94/dot-mysql/blob/master/JSDOC.md)

@@ -1,6 +1,8 @@
 # Dot-MySQL &middot; 
 dot-mysql is a JavaScript library for building mysql queries.
 
+## &middot; [API](https://github.com/Chathu94/dot-mysql/blob/master/JSDOC.md) &middot; [JSDOC](https://github.com/Chathu94/dot-mysql/blob/master/JSDOC.md) &middot;
+
 ## Installation
 ```jsx
 npm install --save dot-mysql

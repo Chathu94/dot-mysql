@@ -2,6 +2,23 @@ import mysql from 'mysql';
 
 const debug = require('debug')('MySQL:');
 
+/**
+ @typedef MySQLResult
+ @type {Object}
+ @property {Array.<string>} results Array of results of query
+ @property {Array.<string>} fields Array of columns in result
+ */
+
+/**
+ @typedef MySQLConfig
+ @type {Object}
+ @property {string} host Hostname of MySQL Server (default: 'localhost')
+ @property {number} port Port of MySQL Server (default: 3306)
+ @property {string} user Username of MySQL Server (default: 'root')
+ @property {string} password Password of MySQL Server (default: '')
+ @property {string} database Name of the database
+ */
+
 export default class MySQL {
 
   static configs = {
@@ -12,6 +29,9 @@ export default class MySQL {
     password: ''
   };
 
+  /**
+   * @constructor
+   */
   constructor() {
     this.log = () => {}; // eslint-disable-line
     // this.log = debug;
@@ -19,6 +39,12 @@ export default class MySQL {
     this.clear();
   }
 
+  /**
+   * Clear current values in Query Builder
+   * @example
+   * db.clear();
+   * @returns {MySQL}
+   */
   clear() {
     this._update = '';
     this._delete = '';
@@ -34,6 +60,14 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Add select parameter
+   * @example
+   * db.select('username', 'uname'); // username AS uname
+   * @param {string} key Column name
+   * @param {string|number} as Used as select as [?]
+   * @returns {MySQL}
+   */
   select(...args) {
     this.log('Adding select', args);
     if (typeof args[0] === 'string') {
@@ -54,6 +88,16 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Add table name to select from
+   * @example
+   * // SELECT * FROM test
+   * db
+   *  .select('*')
+   *  .from('test');
+   * @param {string} table_name Table name
+   * @returns {MySQL}
+   */
   from(...args) {
     this.log('Adding from', args);
     if (typeof args[0] === 'string') {
@@ -63,6 +107,38 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Add where parameter
+   * @example
+   * // SELECT * FROM test WHERE name = ?
+   * db
+   *  .from('test')
+   *  .where('name', 'test');
+   * @example
+   * // SELECT * FROM test WHERE price > ?
+   * db
+   *  .from('test')
+   *  .where('price', 30, '>');
+   * @example
+   * // SELECT * FROM test WHERE price > ? AND name = ?
+   * db
+   *  .from('test')
+   *  .where('price', 30, '>')
+   *  .where('name', 'test');
+   * @example
+   * // SELECT * FROM test WHERE price > ? OR name = ?
+   * db
+   *  .from('test')
+   *  .where('price', 30, '>')
+   *  .where('name', 'test', '=', 'OR');
+   * @param {string} column Column name
+   * @param {string|number} value Value to check
+   * @param {string} condition Condition to where (=, <, >, !=, <=, >=)
+   * @default =
+   * @param {string} refrence Referenced to previous where
+   * @default AND
+   * @returns {MySQL}
+   */
   where(...args) {
     this.log('Adding where', args);
     if (typeof args[0] === 'string') {
@@ -99,17 +175,42 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Grouping where with brackets
+   * @example
+   * // SELECT * FROM test WHERE price = ? AND (name = ? OR name = ?)
+   * db
+   *  .from('test')
+   *  .where('price', 30)
+   *  .whereGroupStart()
+   *  .where('name', 't1')
+   *  .where('name', 't2')
+   *  .whereGroupEnd();
+   * @example
+   * // SELECT * FROM test WHERE price = ? OR (name = ? OR name = ?)
+   * db
+   *  .from('test')
+   *  .where('price', 30)
+   *  .whereGroupStart('OR')
+   *  .where('name', 't1')
+   *  .where('name', 't2')
+   *  .whereGroupEnd();
+   * @param {string} refrence Referenced to previous where
+   * @returns {MySQL}
+   */
   whereGroupStart(...args) {
     this.log('Adding whereGroupStart', args);
     if (typeof args[0] === 'string') {
       this._where.push({
         rel: args[0],
-        value: '('
+        bracket: true,
+        start: true
       });
     } else {
       this._where.push({
         rel: 'AND',
-        value: '('
+        bracket: true,
+        start: true
       });
     }
     this.log('Added whereGroupStart', this._where);
@@ -121,18 +222,26 @@ export default class MySQL {
     if (typeof args[0] === 'string') {
       this._where.push({
         rel: '',
-        value: ')'
+        bracket: true,
+        start: false
       });
     } else {
       this._where.push({
         rel: '',
-        value: ')'
+        bracket: true,
+        start: false
       });
     }
     this.log('Added whereGroupEnd', this._where);
     return this;
   }
 
+  /**
+   * Add set into update
+   * @param {string} column Column name
+   * @param {string|number} value Value to set
+   * @returns {MySQL}
+   */
   set(...args) {
     this.log('Adding set', args);
     if (typeof args[0] === 'string' && (typeof args[1] === 'string' || typeof args[1] === 'number')) {
@@ -149,6 +258,12 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Add value to insert / replace
+   * @param {string} column Column name
+   * @param {string|number} value Value
+   * @returns {MySQL}
+   */
   value(...args) {
     this.log('Adding values', args);
     if (typeof args[0] === 'string' && (typeof args[1] === 'string' || typeof args[1] === 'number')) {
@@ -165,6 +280,17 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Insert query
+   * @example
+   * // INSERT INTO test (name, age) VALUES (?, ?)
+   * db
+   *  .insert('test')
+   *  .value('name', 'John')
+   *  .value('age', 21);
+   * @param {string} table Table name
+   * @returns {MySQL}
+   */
   insert(...args) {
     this.log('Adding insert', args);
     if (typeof args[0] === 'string') {
@@ -177,6 +303,18 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Update query
+   * @example
+   * // UPDATE test SET name = ?, age = ? WHERE id = ?
+   * db
+   *  .update('test')
+   *  .set('name', 'John')
+   *  .set('age', 21)
+   *  .where('id', 1);
+   * @param {string} table Table name
+   * @returns {MySQL}
+   */
   update(...args) {
     this.log('Adding update', args);
     if (typeof args[0] === 'string') {
@@ -189,6 +327,17 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Replace query
+   * @example
+   * // REPLACE INTO test (name, age) VALUES (?, ?)
+   * db
+   *  .replace('test')
+   *  .value('name', 'John')
+   *  .value('age', 21);
+   * @param {string} table Table name
+   * @returns {MySQL}
+   */
   replace(...args) {
     this.log('Adding replace', args);
     if (typeof args[0] === 'string') {
@@ -201,6 +350,16 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Delete query
+   * @example
+   * // DELETE FROM test WHERE id = ?
+   * db
+   *  .delete('test')
+   *  .where('id', 1);
+   * @param {string} table Table name
+   * @returns {MySQL}
+   */
   delete(...args) {
     this.log('Adding delete', args);
     if (typeof args[0] === 'string') {
@@ -213,6 +372,17 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Add inner join to select
+   * @example
+   * // SELECT * FROM test INNER JOIN profile ON test.id = profile.tid WHERE 1
+   * db
+   *  .from('test')
+   *  .innerJoin('profile')
+   *  .on('test.id', 'profile.tId');
+   * @param {string} table Table name
+   * @returns {MySQL}
+   */
   innerJoin(...args) {
     this.log('Adding innerJoin', args);
     if (typeof args[0] === 'string') {
@@ -229,6 +399,17 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Add left join to select
+   * @example
+   * // SELECT * FROM test LEFT JOIN profile ON test.id = profile.tid WHERE 1
+   * db
+   *  .from('test')
+   *  .leftJoin('profile')
+   *  .on('test.id', 'profile.tId');
+   * @param {string} table Table name
+   * @returns {MySQL}
+   */
   leftJoin(...args) {
     this.log('Adding leftJoin', args);
     if (typeof args[0] === 'string') {
@@ -261,6 +442,17 @@ export default class MySQL {
     return this;
   }
 
+  /**
+   * Set columns of join
+   * @example
+   * // SELECT * FROM test INNER JOIN profile ON test.id = profile.tid WHERE 1
+   * db
+   *  .from('test')
+   *  .innerJoin('profile')
+   *  .on('test.id', 'profile.tId');
+   * @param {string} table Table name
+   * @returns {MySQL}
+   */
   on(onFrom, onTo) {
     this.log('Adding on', onFrom, onTo);
     if (typeof onFrom === 'string' && typeof onTo === 'string' && this._tJoin !== undefined) {
@@ -278,9 +470,9 @@ export default class MySQL {
 
   getWhere() {
     return this._where.map((w, k) => {
-      if (!w.key) return `${(k === 0) || (this._where[k-1] && this._where[k-1].value === '(') ? '' : `${w.rel} `}${w}`;
-      return `${(k === 0) || (this._where[k-1] && this._where[k-1].value === '(') ? '' : `${w.rel} `}${w.key} ${w.cond} ?`;
-    }).join(' ');
+      if (w.bracket) return `${w.rel} ` + `${w.start ? '(' : ')'}`;
+      return `${(k === 0) || (this._where[k-1] && this._where[k-1].start) ? '' : `${w.rel} `}${w.key} ${w.cond} ?`;
+    }).join(' ').replace(/\(\s/g, '(').replace(/\s\s\)/g, ')');
   }
 
   getSelect() {
@@ -294,6 +486,17 @@ export default class MySQL {
     return this._join.map(j => `${j.type} JOIN ${j.table} ON ${j.onFrom} = ${j.onTo}`).join(' ');
   }
 
+  /**
+   * Return generated query based on current data
+   * @example
+   * // returns => 'SELECT * FROM test INNER JOIN profile ON test.id = profile.tid WHERE 1'
+   * db
+   *  .from('test')
+   *  .innerJoin('profile')
+   *  .on('test.id', 'profile.tId')
+   *  .query();
+   * @returns {string}
+   */
   query() {
     if (this._insert !== '') {
       return `INSERT INTO ${this._insert} (${this._values.map(({ key }) => key).join(', ')}) VALUES (${this._values.map(() => '?').join(', ')})`;
@@ -309,6 +512,18 @@ export default class MySQL {
     return '';
   }
 
+  /**
+   * Get value array based on current data
+   * @example
+   * // ['John', 21, 1]
+   * db
+   *  .update('test')
+   *  .set('name', 'John')
+   *  .set('age', 21)
+   *  .where('id', 1)
+   *  .values();
+   * @returns {Array.<(string|number)>}
+   */
   values() {
     let values = [];
     if (this._insert !== '') {
@@ -316,15 +531,21 @@ export default class MySQL {
     } else if (this._replace !== '') {
       values = this._values.map(({ value }) => value);
     } else if (this._update !== '') {
-      values = [...this._set.map(({ value }) => value), ...this._where.map(({ value }) => value)];
+      values = [...this._set.map(({ value }) => value), ...this._where.filter(w => !w.bracket).map(({ value }) => value)];
     } else if (this._delete !== '') {
-      values = this._where.map(({ value }) => value);
+      values = this._where.filter(w => !w.bracket).map(({ value }) => value);
     } else if (this._from !== '') {
-      values = this._where.map(({ value }) => value);
+      values = this._where.filter(w => !w.bracket).map(({ value }) => value);
     }
     return values;
   }
 
+  /**
+   * Execute query based on current data
+   * @async
+   * @param {boolean} start_transaction If true, MySQL will start new transaction.
+   * @returns {MySQLResult}
+   */
   exec(...args) {
     const values = this.values();
     const sql = this.query();
@@ -344,22 +565,41 @@ export default class MySQL {
     }
   }
 
+  /**
+   * Commit current queries. You need to use .exec(true)
+   * @async
+   * @returns {boolean}
+   */
   commit() {
     if (this._connection) {
       return MySQL.commit(this._connection);
     }
   }
 
+  /**
+   * Rollback current queries. You need to use .exec(true)
+   * @async
+   * @param {Error} error Error will throw after rollback.
+   * @returns {boolean}
+   */
   rollback(err) {
     if (this._connection) {
       return MySQL.rollback(this._connection, err);
     }
   }
 
+  /**
+   * Configure MySQL server and database info
+   * @param {MySQLConfig} config Config Data
+   */
   static config(config) {
     MySQL.configs = {...MySQL.configs, ...config };
   }
 
+  /**
+   * Initialize MySQL pool manually.
+   * It will automatically initiate. You don't have to use it manually.
+   */
   static initialize() {
     const config = MySQL.configs;
     config.connectionLimit = 20;
@@ -386,6 +626,11 @@ export default class MySQL {
     debug('SQL pool initialized.');
   }
 
+  /**
+   * Get new connection from MySQL pool
+   * @async
+   * @returns {Object} MySQL Connection
+   */
   static getConnection() {
     if (!MySQL.sqlPool) {
       MySQL.initialize();
@@ -402,6 +647,13 @@ export default class MySQL {
     });
   }
 
+  /**
+   * Begin new transaction
+   * If you give connection, it will start transaction on given connection. else it will create new connection and return it.
+   * @async
+   * @param {Object} connection MySQL Connection
+   * @returns {Object} connection MySQL Connection
+   */
   static beginTransaction(con) {
     if (con) {
       return new Promise((resolve, reject) => {
@@ -422,6 +674,12 @@ export default class MySQL {
       }));
   }
 
+  /**
+   * Rollback transaction
+   * @async
+   * @param {Object} connection MySQL Connection
+   * @returns {Object} connection MySQL Connection
+   */
   static rollback(con, err) {
     return new Promise((resolve, reject) => {
       con.rollback(() => {
@@ -432,6 +690,12 @@ export default class MySQL {
     });
   }
 
+  /**
+   * Commit transaction
+   * @async
+   * @param {Object} connection MySQL Connection
+   * @returns {Object} connection MySQL Connection
+   */
   static commit(con) {
     return new Promise((resolve, reject) => {
       con.commit((error) => {
@@ -448,6 +712,15 @@ export default class MySQL {
     });
   }
 
+  /**
+   * Execute query
+   * @param {string} sql Query
+   * @param {number} timeout Timeout for query execution (default: 40000) = 40 mins.
+   * @param {Array.<(string|number)>} values Values for query Question marks (?)
+   * @param {Object} connection If connection given it will be used. else it will get new one from pool and execute.
+   * @param {boolean} rollback If true it will rollback on faliure
+   * @returns {MySQLResult}
+   */
   static execute({ sql, timeout = 40000, values = [], connection, rollback }) {
     const promise = (con, rb) => new Promise((resolve, reject) => {
       con.query({ sql, timeout, values }, (error, results, fields) => {
@@ -470,10 +743,15 @@ export default class MySQL {
       return MySQL.getConnection()
         .then(con => promise(con, rollback || MySQL.sqlTransaction || false));
     } else {
-      return promise(connection, rollback || MySQL.sqlTransaction || false);
+      return promise(connection, true);
     }
   }
 
+  /**
+   * Escape strings for use in queries
+   * @param {string} str String to escape
+   * @returns {string}
+   */
   static escape(str) {
     return mysql.escape(str);
   }

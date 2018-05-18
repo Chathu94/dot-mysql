@@ -1,11 +1,11 @@
 {
   "name": "dot-mysql",
-  "version": "0.0.21",
+  "version": "0.0.23",
   "description": "Promosified MySQL Helper",
   "main": "index.js",
   "scripts": {
     "pretest": "babel test-mysql.js --out-file mysql.test.js --presets=env,stage-2 && babel mysql.js --out-file index.js --presets=env,stage-2",
-    "test": "DEBUG=MySQL:* mocha './*.test.js*'",
+    "test": "DEBUG=MySQL:* mocha --exit './*.test.js*'",
     "build": "babel mysql.js --out-file index.js --presets=env,stage-2"
   },
   "repository": {
