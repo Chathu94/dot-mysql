@@ -22,6 +22,23 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var debug = require('debug')('MySQL:');
 
+/**
+ @typedef MySQLResult
+ @type {Object}
+ @property {Array.<string>} results Array of results of query
+ @property {Array.<string>} fields Array of columns in result
+ */
+
+/**
+ @typedef MySQLConfig
+ @type {Object}
+ @property {string} host Hostname of MySQL Server (default: 'localhost')
+ @property {number} port Port of MySQL Server (default: 3306)
+ @property {string} user Username of MySQL Server (default: 'root')
+ @property {string} password Password of MySQL Server (default: '')
+ @property {string} database Name of the database
+ */
+
 var MySQL = function () {
 
   /**
@@ -300,6 +317,14 @@ var MySQL = function () {
       this.log('Added set', this._set);
       return this;
     }
+
+    /**
+     * Add value to insert / replace
+     * @param {string} column Column name
+     * @param {string|number} value Value
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'value',
     value: function value() {
@@ -323,6 +348,19 @@ var MySQL = function () {
       this.log('Added value', this._values);
       return this;
     }
+
+    /**
+     * Insert query
+     * @example
+     * // INSERT INTO test (name, age) VALUES (?, ?)
+     * db
+     *  .insert('test')
+     *  .value('name', 'John')
+     *  .value('age', 21);
+     * @param {string} table Table name
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'insert',
     value: function insert() {
@@ -340,6 +378,20 @@ var MySQL = function () {
       this.log('Added insert', this._insert);
       return this;
     }
+
+    /**
+     * Update query
+     * @example
+     * // UPDATE test SET name = ?, age = ? WHERE id = ?
+     * db
+     *  .update('test')
+     *  .set('name', 'John')
+     *  .set('age', 21)
+     *  .where('id', 1);
+     * @param {string} table Table name
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'update',
     value: function update() {
@@ -357,6 +409,19 @@ var MySQL = function () {
       this.log('Added update', this._update);
       return this;
     }
+
+    /**
+     * Replace query
+     * @example
+     * // REPLACE INTO test (name, age) VALUES (?, ?)
+     * db
+     *  .replace('test')
+     *  .value('name', 'John')
+     *  .value('age', 21);
+     * @param {string} table Table name
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'replace',
     value: function replace() {
@@ -374,6 +439,18 @@ var MySQL = function () {
       this.log('Added replace', this._replace);
       return this;
     }
+
+    /**
+     * Delete query
+     * @example
+     * // DELETE FROM test WHERE id = ?
+     * db
+     *  .delete('test')
+     *  .where('id', 1);
+     * @param {string} table Table name
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'delete',
     value: function _delete() {
@@ -391,6 +468,19 @@ var MySQL = function () {
       this.log('Added delete', this._delete);
       return this;
     }
+
+    /**
+     * Add inner join to select
+     * @example
+     * // SELECT * FROM test INNER JOIN profile ON test.id = profile.tid WHERE 1
+     * db
+     *  .from('test')
+     *  .innerJoin('profile')
+     *  .on('test.id', 'profile.tId');
+     * @param {string} table Table name
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'innerJoin',
     value: function innerJoin() {
@@ -412,6 +502,19 @@ var MySQL = function () {
       }
       return this;
     }
+
+    /**
+     * Add left join to select
+     * @example
+     * // SELECT * FROM test LEFT JOIN profile ON test.id = profile.tid WHERE 1
+     * db
+     *  .from('test')
+     *  .leftJoin('profile')
+     *  .on('test.id', 'profile.tId');
+     * @param {string} table Table name
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'leftJoin',
     value: function leftJoin() {
@@ -454,6 +557,19 @@ var MySQL = function () {
       }
       return this;
     }
+
+    /**
+     * Set columns of join
+     * @example
+     * // SELECT * FROM test INNER JOIN profile ON test.id = profile.tid WHERE 1
+     * db
+     *  .from('test')
+     *  .innerJoin('profile')
+     *  .on('test.id', 'profile.tId');
+     * @param {string} table Table name
+     * @returns {MySQL}
+     */
+
   }, {
     key: 'on',
     value: function on(onFrom, onTo) {
@@ -495,6 +611,19 @@ var MySQL = function () {
         return j.type + ' JOIN ' + j.table + ' ON ' + j.onFrom + ' = ' + j.onTo;
       }).join(' ');
     }
+
+    /**
+     * Return generated query based on current data
+     * @example
+     * // returns => 'SELECT * FROM test INNER JOIN profile ON test.id = profile.tid WHERE 1'
+     * db
+     *  .from('test')
+     *  .innerJoin('profile')
+     *  .on('test.id', 'profile.tId')
+     *  .query();
+     * @returns {string}
+     */
+
   }, {
     key: 'query',
     value: function query() {
@@ -524,6 +653,20 @@ var MySQL = function () {
       }
       return '';
     }
+
+    /**
+     * Get value array based on current data
+     * @example
+     * // ['John', 21, 1]
+     * db
+     *  .update('test')
+     *  .set('name', 'John')
+     *  .set('age', 21)
+     *  .where('id', 1)
+     *  .values();
+     * @returns {Array.<(string|number)>}
+     */
+
   }, {
     key: 'values',
     value: function values() {
@@ -565,6 +708,14 @@ var MySQL = function () {
       }
       return values;
     }
+
+    /**
+     * Execute query based on current data
+     * @async
+     * @param {boolean} start_transaction If true, MySQL will start new transaction.
+     * @returns {MySQLResult}
+     */
+
   }, {
     key: 'exec',
     value: function exec() {
@@ -586,6 +737,13 @@ var MySQL = function () {
         return MySQL.execute({ sql: sql, values: values, connection: arguments.length <= 0 ? undefined : arguments[0] });
       }
     }
+
+    /**
+     * Commit current queries. You need to use .exec(true)
+     * @async
+     * @returns {boolean}
+     */
+
   }, {
     key: 'commit',
     value: function commit() {
@@ -593,6 +751,14 @@ var MySQL = function () {
         return MySQL.commit(this._connection);
       }
     }
+
+    /**
+     * Rollback current queries. You need to use .exec(true)
+     * @async
+     * @param {Error} error Error will throw after rollback.
+     * @returns {boolean}
+     */
+
   }, {
     key: 'rollback',
     value: function rollback(err) {
@@ -600,11 +766,23 @@ var MySQL = function () {
         return MySQL.rollback(this._connection, err);
       }
     }
+
+    /**
+     * Configure MySQL server and database info
+     * @param {MySQLConfig} config Config Data
+     */
+
   }], [{
     key: 'config',
     value: function config(_config) {
       MySQL.configs = _extends({}, MySQL.configs, _config);
     }
+
+    /**
+     * Initialize MySQL pool manually.
+     * It will automatically initiate. You don't have to use it manually.
+     */
+
   }, {
     key: 'initialize',
     value: function initialize() {
@@ -632,6 +810,13 @@ var MySQL = function () {
       });
       debug('SQL pool initialized.');
     }
+
+    /**
+     * Get new connection from MySQL pool
+     * @async
+     * @returns {Object} MySQL Connection
+     */
+
   }, {
     key: 'getConnection',
     value: function getConnection() {
@@ -649,6 +834,15 @@ var MySQL = function () {
         });
       });
     }
+
+    /**
+     * Begin new transaction
+     * If you give connection, it will start transaction on given connection. else it will create new connection and return it.
+     * @async
+     * @param {Object} connection MySQL Connection
+     * @returns {Object} connection MySQL Connection
+     */
+
   }, {
     key: 'beginTransaction',
     value: function beginTransaction(con) {
@@ -671,6 +865,14 @@ var MySQL = function () {
         });
       });
     }
+
+    /**
+     * Rollback transaction
+     * @async
+     * @param {Object} connection MySQL Connection
+     * @returns {Object} connection MySQL Connection
+     */
+
   }, {
     key: 'rollback',
     value: function rollback(con, err) {
@@ -682,6 +884,14 @@ var MySQL = function () {
         });
       });
     }
+
+    /**
+     * Commit transaction
+     * @async
+     * @param {Object} connection MySQL Connection
+     * @returns {Object} connection MySQL Connection
+     */
+
   }, {
     key: 'commit',
     value: function commit(con) {
@@ -699,6 +909,17 @@ var MySQL = function () {
         });
       });
     }
+
+    /**
+     * Execute query
+     * @param {string} sql Query
+     * @param {number} timeout Timeout for query execution (default: 40000) = 40 mins.
+     * @param {Array.<(string|number)>} values Values for query Question marks (?)
+     * @param {Object} connection If connection given it will be used. else it will get new one from pool and execute.
+     * @param {boolean} rollback If true it will rollback on faliure
+     * @returns {MySQLResult}
+     */
+
   }, {
     key: 'execute',
     value: function execute(_ref10) {
@@ -739,6 +960,13 @@ var MySQL = function () {
         return promise(connection, true);
       }
     }
+
+    /**
+     * Escape strings for use in queries
+     * @param {string} str String to escape
+     * @returns {string}
+     */
+
   }, {
     key: 'escape',
     value: function escape(str) {

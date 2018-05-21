@@ -29,7 +29,7 @@ describe('## Config', () => {
           done();
         })
         .catch(e => done(e));
-    });
+    }).timeout(30000);
   });
   describe('# Create testing table', () => {
     it('should create table', (done) => {
@@ -47,7 +47,7 @@ describe('## Config', () => {
           done();
         })
         .catch(e => done(e));
-    });
+    }).timeout(30000);
     it('should truncate table', (done) => {
       const sql = 'TRUNCATE TABLE `test`;';
       MySQL
@@ -56,7 +56,7 @@ describe('## Config', () => {
           done();
         })
         .catch(e => done(e));
-    });
+    }).timeout(30000);
   });
 });
 
