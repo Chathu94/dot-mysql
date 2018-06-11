@@ -57,6 +57,9 @@ export default class MySQL {
     this._where = [];
     this._set = [];
     this._values = [];
+    this._limit = -1;
+    this._offset = -1;
+    this._order = '';
     return this;
   }
 
@@ -172,6 +175,34 @@ export default class MySQL {
       this._where.push([...this._where, ...args[0]]);
     }
     this.log('Added where', this._where);
+    return this;
+  }
+
+  limit(...args) {
+    this.log('Adding where', args);
+    if (typeof args[0] === 'number') {
+      this._limit = args[0]
+      if (typeof args[1] === 'number') {
+        this._offset = args[1]
+      }
+    }
+    return this;
+  }
+
+  offset(...args) {
+    if (typeof args[0] === 'number') {
+      this._offset = args[0]
+    }
+    return this;
+  }
+
+  orderBy(...args) {
+    if (typeof args[0] === 'string') {
+      this._order = `\`${args[0]}\` ASC`;
+      if (typeof args[1] === 'number') {
+        this._order = `\`${args[0]}\` ${args[1] === -1 ? 'DESC' : 'ASC'}`;
+      }
+    }
     return this;
   }
 
@@ -486,6 +517,14 @@ export default class MySQL {
     return this._join.map(j => `${j.type} JOIN ${j.table} ON ${j.onFrom} = ${j.onTo}`).join(' ');
   }
 
+  getLimit() {
+    return this._limit > -1 ? ` LIMIT ${this._limit}${this._offset > -1 ? ` OFFSET ${this._offset}` : ''}` : '';
+  }
+
+  getOrder() {
+    return this._order !== '' ? ` ORDER BY ${this._order}` : ''
+  }
+
   /**
    * Return generated query based on current data
    * @example
@@ -503,11 +542,11 @@ export default class MySQL {
     } else if (this._replace !== '') {
       return `REPLACE INTO ${this._replace} (${this._values.map(({ key }) => key).join(', ')}) VALUES (${this._values.map(() => '?').join(', ')})`;
     } else if (this._update !== '') {
-      return `UPDATE ${this._update} SET ${this._set.map(({ key }) => `${key} = ?`).join(', ')} WHERE ${this._where.length > 0 ? `${this.getWhere()}` : '1'}`;
+      return `UPDATE ${this._update} SET ${this._set.map(({ key }) => `${key} = ?`).join(', ')} WHERE ${this._where.length > 0 ? `${this.getWhere()}` : '1'}${this.getOrder()}${this.getLimit()}`;
     } else if (this._delete !== '') {
-      return `DELETE FROM ${this._delete} WHERE ${this._where.length > 0 ? `${this.getWhere()}` : '1'}`;
+      return `DELETE FROM ${this._delete} WHERE ${this._where.length > 0 ? `${this.getWhere()}` : '1'}${this.getOrder()}${this.getLimit()}`;
     } else if (this._from !== '') {
-      return `SELECT ${this._select.length > 0 ? this.getSelect() : '*'} FROM ${this._from}${this._join.length > 0 ? ` ${this.getJoin()}` : ''} WHERE ${this._where.length > 0 ? `${this.getWhere()}` : '1'}`;
+      return `SELECT ${this._select.length > 0 ? this.getSelect() : '*'} FROM ${this._from}${this._join.length > 0 ? ` ${this.getJoin()}` : ''} WHERE ${this._where.length > 0 ? `${this.getWhere()}` : '1'}${this.getOrder()}${this.getLimit()}`;
     }
     return '';
   }

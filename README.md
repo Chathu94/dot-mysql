@@ -1,8 +1,9 @@
 # Dot-MySQL &middot; 
 dot-mysql is a JavaScript library for building mysql queries.
 
-#### Travis
 [![Build Status](https://travis-ci.org/Chathu94/dot-mysql.svg?branch=master)](https://travis-ci.org/Chathu94/dot-mysql)
+[![npm lowest](https://img.shields.io/badge/npm-v4.0.0-blue.svg)](https://travis-ci.org/Chathu94/dot-mysql)
+[![npm lowest](https://img.shields.io/badge/npm-v9.5.0-blue.svg)](https://travis-ci.org/Chathu94/dot-mysql)
 
 ## &middot; [API](https://github.com/Chathu94/dot-mysql/blob/master/JSDOC.md) &middot; [JSDOC](https://github.com/Chathu94/dot-mysql/blob/master/JSDOC.md) &middot;
 
