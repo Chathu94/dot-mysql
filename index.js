@@ -75,6 +75,9 @@ var MySQL = function () {
       this._where = [];
       this._set = [];
       this._values = [];
+      this._limit = -1;
+      this._offset = -1;
+      this._order = '';
       return this;
     }
 
@@ -213,6 +216,41 @@ var MySQL = function () {
       this.log('Added where', this._where);
       return this;
     }
+  }, {
+    key: 'limit',
+    value: function limit() {
+      for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+        args[_key4] = arguments[_key4];
+      }
+
+      this.log('Adding where', args);
+      if (typeof args[0] === 'number') {
+        this._limit = args[0];
+        if (typeof args[1] === 'number') {
+          this._offset = args[1];
+        }
+      }
+      return this;
+    }
+  }, {
+    key: 'offset',
+    value: function offset() {
+      if (typeof (arguments.length <= 0 ? undefined : arguments[0]) === 'number') {
+        this._offset = arguments.length <= 0 ? undefined : arguments[0];
+      }
+      return this;
+    }
+  }, {
+    key: 'orderBy',
+    value: function orderBy() {
+      if (typeof (arguments.length <= 0 ? undefined : arguments[0]) === 'string') {
+        this._order = '`' + (arguments.length <= 0 ? undefined : arguments[0]) + '` ASC';
+        if (typeof (arguments.length <= 1 ? undefined : arguments[1]) === 'number') {
+          this._order = '`' + (arguments.length <= 0 ? undefined : arguments[0]) + '` ' + ((arguments.length <= 1 ? undefined : arguments[1]) === -1 ? 'DESC' : 'ASC');
+        }
+      }
+      return this;
+    }
 
     /**
      * Grouping where with brackets
@@ -241,8 +279,8 @@ var MySQL = function () {
   }, {
     key: 'whereGroupStart',
     value: function whereGroupStart() {
-      for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-        args[_key4] = arguments[_key4];
+      for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+        args[_key5] = arguments[_key5];
       }
 
       this.log('Adding whereGroupStart', args);
@@ -265,8 +303,8 @@ var MySQL = function () {
   }, {
     key: 'whereGroupEnd',
     value: function whereGroupEnd() {
-      for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-        args[_key5] = arguments[_key5];
+      for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+        args[_key6] = arguments[_key6];
       }
 
       this.log('Adding whereGroupEnd', args);
@@ -297,8 +335,8 @@ var MySQL = function () {
   }, {
     key: 'set',
     value: function set() {
-      for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-        args[_key6] = arguments[_key6];
+      for (var _len7 = arguments.length, args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+        args[_key7] = arguments[_key7];
       }
 
       this.log('Adding set', args);
@@ -328,8 +366,8 @@ var MySQL = function () {
   }, {
     key: 'value',
     value: function value() {
-      for (var _len7 = arguments.length, args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-        args[_key7] = arguments[_key7];
+      for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+        args[_key8] = arguments[_key8];
       }
 
       this.log('Adding values', args);
@@ -364,8 +402,8 @@ var MySQL = function () {
   }, {
     key: 'insert',
     value: function insert() {
-      for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-        args[_key8] = arguments[_key8];
+      for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+        args[_key9] = arguments[_key9];
       }
 
       this.log('Adding insert', args);
@@ -395,8 +433,8 @@ var MySQL = function () {
   }, {
     key: 'update',
     value: function update() {
-      for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
-        args[_key9] = arguments[_key9];
+      for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+        args[_key10] = arguments[_key10];
       }
 
       this.log('Adding update', args);
@@ -425,8 +463,8 @@ var MySQL = function () {
   }, {
     key: 'replace',
     value: function replace() {
-      for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
-        args[_key10] = arguments[_key10];
+      for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+        args[_key11] = arguments[_key11];
       }
 
       this.log('Adding replace', args);
@@ -454,8 +492,8 @@ var MySQL = function () {
   }, {
     key: 'delete',
     value: function _delete() {
-      for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
-        args[_key11] = arguments[_key11];
+      for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+        args[_key12] = arguments[_key12];
       }
 
       this.log('Adding delete', args);
@@ -484,8 +522,8 @@ var MySQL = function () {
   }, {
     key: 'innerJoin',
     value: function innerJoin() {
-      for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
-        args[_key12] = arguments[_key12];
+      for (var _len13 = arguments.length, args = Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+        args[_key13] = arguments[_key13];
       }
 
       this.log('Adding innerJoin', args);
@@ -518,8 +556,8 @@ var MySQL = function () {
   }, {
     key: 'leftJoin',
     value: function leftJoin() {
-      for (var _len13 = arguments.length, args = Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
-        args[_key13] = arguments[_key13];
+      for (var _len14 = arguments.length, args = Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
+        args[_key14] = arguments[_key14];
       }
 
       this.log('Adding leftJoin', args);
@@ -539,8 +577,8 @@ var MySQL = function () {
   }, {
     key: 'join',
     value: function join() {
-      for (var _len14 = arguments.length, args = Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
-        args[_key14] = arguments[_key14];
+      for (var _len15 = arguments.length, args = Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
+        args[_key15] = arguments[_key15];
       }
 
       this.log('Adding join', args);
@@ -611,6 +649,16 @@ var MySQL = function () {
         return j.type + ' JOIN ' + j.table + ' ON ' + j.onFrom + ' = ' + j.onTo;
       }).join(' ');
     }
+  }, {
+    key: 'getLimit',
+    value: function getLimit() {
+      return this._limit > -1 ? ' LIMIT ' + this._limit + (this._offset > -1 ? ' OFFSET ' + this._offset : '') : '';
+    }
+  }, {
+    key: 'getOrder',
+    value: function getOrder() {
+      return this._order !== '' ? ' ORDER BY ' + this._order : '';
+    }
 
     /**
      * Return generated query based on current data
@@ -645,11 +693,11 @@ var MySQL = function () {
         return 'UPDATE ' + this._update + ' SET ' + this._set.map(function (_ref3) {
           var key = _ref3.key;
           return key + ' = ?';
-        }).join(', ') + ' WHERE ' + (this._where.length > 0 ? '' + this.getWhere() : '1');
+        }).join(', ') + ' WHERE ' + (this._where.length > 0 ? '' + this.getWhere() : '1') + this.getOrder() + this.getLimit();
       } else if (this._delete !== '') {
-        return 'DELETE FROM ' + this._delete + ' WHERE ' + (this._where.length > 0 ? '' + this.getWhere() : '1');
+        return 'DELETE FROM ' + this._delete + ' WHERE ' + (this._where.length > 0 ? '' + this.getWhere() : '1') + this.getOrder() + this.getLimit();
       } else if (this._from !== '') {
-        return 'SELECT ' + (this._select.length > 0 ? this.getSelect() : '*') + ' FROM ' + this._from + (this._join.length > 0 ? ' ' + this.getJoin() : '') + ' WHERE ' + (this._where.length > 0 ? '' + this.getWhere() : '1');
+        return 'SELECT ' + (this._select.length > 0 ? this.getSelect() : '*') + ' FROM ' + this._from + (this._join.length > 0 ? ' ' + this.getJoin() : '') + ' WHERE ' + (this._where.length > 0 ? '' + this.getWhere() : '1') + this.getOrder() + this.getLimit();
       }
       return '';
     }

@@ -259,7 +259,7 @@ describe('## Query Builder', () => {
       done();
     });
   });
-  describe('# INSERT / REPLACE', () => {
+  describe('# UPDATE', () => {
     it('should generate simple update', (done) => {
       const db = new MySQL();
       db
@@ -317,6 +317,54 @@ describe('## Query Builder', () => {
       const values = db.values();
       expect(sql).to.equal('DELETE FROM test WHERE id = ? OR (username = ? OR username = ?)');
       expect(values).to.deep.equal([1, 'u1', 'u2']);
+      done();
+    });
+  });
+  describe('# LIMIT', () => {
+    it('should generate simple select with limit', (done) => {
+      const db = new MySQL();
+      db
+        .delete('test')
+        .limit(10);
+      const sql = db.query();
+      const values = db.values();
+      expect(sql).to.equal('DELETE FROM test WHERE 1 LIMIT 10');
+      expect(values).to.deep.equal([]);
+      done();
+    });
+    it('should generate simple select with limit and offset', (done) => {
+      const db = new MySQL();
+      db
+        .delete('test')
+        .limit(10, 20);
+      const sql = db.query();
+      const values = db.values();
+      expect(sql).to.equal('DELETE FROM test WHERE 1 LIMIT 10 OFFSET 20');
+      expect(values).to.deep.equal([]);
+      done();
+    });
+    it('should generate simple select with limit, offset and order by asc', (done) => {
+      const db = new MySQL();
+      db
+        .delete('test')
+        .limit(10, 20)
+        .orderBy('name');
+      const sql = db.query();
+      const values = db.values();
+      expect(sql).to.equal('DELETE FROM test WHERE 1 ORDER BY `name` ASC LIMIT 10 OFFSET 20');
+      expect(values).to.deep.equal([]);
+      done();
+    });
+    it('should generate simple select with limit, offset and order by desc', (done) => {
+      const db = new MySQL();
+      db
+        .delete('test')
+        .limit(10, 20)
+        .orderBy('name', -1);
+      const sql = db.query();
+      const values = db.values();
+      expect(sql).to.equal('DELETE FROM test WHERE 1 ORDER BY `name` DESC LIMIT 10 OFFSET 20');
+      expect(values).to.deep.equal([]);
       done();
     });
   });
