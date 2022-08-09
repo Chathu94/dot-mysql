@@ -1,6 +1,6 @@
 {
   "name": "dot-mysql",
-  "version": "0.0.26",
+  "version": "0.0.29",
   "description": "Promisified MySQL Helper",
   "main": "index.js",
   "scripts": {
