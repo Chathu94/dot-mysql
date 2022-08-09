@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "pretest": "babel test-mysql.js --out-file mysql.test.js --presets=env,stage-2 && babel mysql.js --out-file index.js --presets=env,stage-2",
-    "test": "DEBUG=MySQL:* mocha --exit './*.test.js*'",
+    "test": "cross-env DEBUG=MySQL:* mocha --exit './*.test.js*'",
     "build": "babel mysql.js --out-file index.js --presets=env,stage-2"
   },
   "repository": {
@@ -15,14 +15,15 @@
   "author": "Hashan Chathruanga",
   "license": "ISC",
   "dependencies": {
-    "debug": "^3.1.0",
-    "mysql": "^2.15.0"
+    "debug": "^4.3.4",
+    "mysql": "^2.18.1"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.6.1",
+    "babel-preset-env": "^1.7.0",
     "babel-preset-stage-2": "^6.24.1",
-    "chai": "^4.1.2",
-    "mocha": "^5.1.1"
+    "chai": "^4.3.6",
+    "cross-env": "^7.0.3",
+    "mocha": "^10.0.0"
   }
 }
