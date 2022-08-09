@@ -1,7 +1,7 @@
 {
   "name": "dot-mysql",
-  "version": "0.0.25",
-  "description": "Promosified MySQL Helper",
+  "version": "0.0.26",
+  "description": "Promisified MySQL Helper",
   "main": "index.js",
   "scripts": {
     "pretest": "babel test-mysql.js --out-file mysql.test.js --presets=env,stage-2 && babel mysql.js --out-file index.js --presets=env,stage-2",
